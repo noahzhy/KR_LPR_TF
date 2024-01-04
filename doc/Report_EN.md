@@ -1,5 +1,24 @@
 # Real-time Korean License Plate Recognition
 
+## Contents
+- [Real-time Korean License Plate Recognition](#real-time-korean-license-plate-recognition)
+  - [Contents](#contents)
+  - [Abstract](#abstract)
+  - [Introduction](#introduction)
+  - [Model](#model)
+    - [Backbone](#backbone)
+    - [Attention Module](#attention-module)
+  - [Dataset](#dataset)
+  - [Postprocessing](#postprocessing)
+    - [Greedy Decoding](#greedy-decoding)
+    - [License Plate Confidence](#license-plate-confidence)
+    - [Regular Expression](#regular-expression)
+  - [Model Performance](#model-performance)
+    - [Computational Cost](#computational-cost)
+    - [Speed of Inference](#speed-of-inference)
+  - [Comparison with previous works](#comparison-with-previous-works)
+  - [Development Environment](#development-environment)
+
 ## Abstract
 
 With the development of multi-task learning in recent years, more and more experiments have proved that multi-task learning can further improve the accuracy. Compared with single-task learning, there are several advantages.
@@ -14,7 +33,7 @@ Inspired by this, the real-time South Korean license plate recognition model pro
 
 As shown in the figure below, the network is designed for multi-task learning, which includes two tasks: license plate numbers segmentation and license plate recognition. During training, the model generates segmentation results and license plate results at the same time, but in the actual deployment of the inference model, we remove the head responsible for the segmentation task to further simplify the model and improve the inference speed.
 
-![model](../assets/model_arch.svg)
+![model](../assets/model.png)
 
 Although the char-level segmentation task is not the main task of this project, it can still improve the accuracy of license plate recognition. The model can learn the structure information of the license plate better, thereby improving the accuracy of license plate recognition.
 
@@ -34,7 +53,7 @@ In addition, the license plate recognition task is a sequence recognition task, 
 
 ### Backbone
 
-Considering the requirements of real-time, we use the lightweight model MobileNetV3 as the backbone network. The backbone network is used to extract the features of the input image. The backbone network is a MobileNetV3-Small model, which is a lightweight model with a small amount of calculation and a small number of parameters. The backbone network is used to extract the features of the input image. But we modify the mobileNetV3-Small model to make it more suitable for the license plate recognition task.
+Considering the requirements of real-time, we use the lightweight model MobileNetV3 as the backbone network. The backbone network is used to extract the features of the input image. The backbone network is a MobileNetV3-Small with 0.25 width multiplier, which is a lightweight model with a small amount of calculation and a small number of parameters. The backbone network is used to extract the features of the input image. But we modify the mobileNetV3-Small model to make it more suitable for the license plate recognition task.
 
 1. We change the input size of the model to 64x128, which is more suitable for the license plate recognition task. The few convolutional layers was changed to stride 1 to get bigger feature map to improve the accuracy of the model for the license plate recognition task.
 
@@ -80,7 +99,7 @@ The attention module is constructed by local and global block. After extracting 
 
 For char module, using a simple 1x1 convolutional layer to get the character ordering sequence mask feature map and resize it to match the ordering of the license plate characters. Also, the feature map of attention module is resized to shape (batch_size, height x width, channel) to match the shape of the character ordering sequence mask feature map. Then, the feature map of attention module is multiplied by the character ordering sequence mask feature map to get the feature map of the license plate characters. After that, using a fully connected layer to get the license plate characters.
 
-![attention module](../assets/TC_atten.png)
+![attention module](../assets/tc_attn.png)
 
 In order to further improve the accuracy and speed of the model, we use the focal CTC loss function to replace the traditional CTC loss function. The focal CTC loss function can reduce the impact of the uneven distribution of Korean characters and numbers on the model training.
 
@@ -88,7 +107,7 @@ $$ L_{Focal\ CTC} = \alpha * (1-y')^\gamma * \log(y'), $$
 
 where $y'$ is the output of the model, $y$ is the target, $\alpha$ is the balance parameter, and $\gamma$ is the focusing parameter. In this project, $\alpha$ is set to 0.8 and $\gamma$ is set to 3.0.
 
-![supported operations](../assets/supported_operations.jpg)
+![supported operations](../assets/tpu.jpg)
 
 As the figure above shows, the green node in above figure means the operation is supported by the coral device. All operations in license plate recognition model are supported in target coral device. The model is a lightweight model with a small amount of calculation and a small number of parameters, which can meet the requirements of real-time.
 
@@ -110,7 +129,27 @@ With the help of the synthetic dataset, we can train a more robust model. The fi
 
 ![synthetic dataset distribution](../assets/synthetic_dataset_distribution.png)
 
-## Regular Expression
+## Postprocessing
+
+### Greedy Decoding
+
+As we all know, the greedy decoding algorithm is one of the simplest decoding algorithms which is widely used in the sequence recognition task. The greedy decoding algorithm formula is as follows.
+
+$$ A^*=\underset{A}{argmax}\prod_{t=1}^{T}p_t(a_t|X) $$
+
+where $A^*$ is the best hypothesis, $A$ is the set of all hypotheses, $p_t(a_t|X)$ is the probability of the character $a_t$ at time step $t$.
+
+Although the greedy decoding algorithm is simple and fast, it will also bring some problems. For example, the greedy decoding algorithm will output the character with the highest probability at each time step, its prediction probability distribution is skewed towards the best hypothesis.
+
+### License Plate Confidence
+
+In industrial applications, there is a prevailing inclination towards minimizing the occurrence of false positives (FP). Therefore, we need to add a confidence score to the license plate recognition model to determine whether the license plate recognition result is correct. In general, we only need to consider the minimum probability of all characters in the license plate recognition result. The formula is as follows.
+
+$$ Confidence = \min_{i=1}^{N}p_i $$
+
+where $N$ is the number of characters in the license plate recognition result, $p_i$ is the probability of the character $i$.
+
+### Regular Expression
 
 The RE means regular expression of which the format is `^[가-힣]{2}[0-9]{2}[가-힣]{1}[0-9]{4}|^[0-9]{2,3}[가-힣]{1}[0-9]{4}$`.
 
@@ -139,8 +178,8 @@ Any license plate that does not meet the above conditions is considered invalid.
 | task                      | accuracy* |
 |:--------------------------|:---------:|
 | LPR w/ RE                 | 100.0 %   |
-| LPR w/o RE                | 98.73 %   |
-| Character Recognition     | 99.81 %   |
+| LPR w/o RE                | 99.05 %   |
+| Character Recognition     | 99.86 %   |
 
 \* All accuracy is calculated on unquantized model.
 
