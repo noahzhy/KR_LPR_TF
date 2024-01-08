@@ -2,13 +2,35 @@
 
 This repository is based on [Self-supervised Implicit Glyph Attention for Text Recognition](https://arxiv.org/abs/2203.03382). It is a Tensorflow implementation of Korean license plate recognition.
 
-## Demo
+## Demo (Web)
 
 <a href="https://huggingface.co/spaces/noahzhy/KR_LPR_TF">
   <img alt="Spaces" src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue">
 </a>
 
 ![Website](assets/demo.jpg)
+
+## Demo (Local)
+
+The following code is available at [run.py](run.py).
+
+```python
+from demo.run import TFliteDemo
+
+demo = TFliteDemo(
+  'demo/model.tflite',
+  'demo/label.names',
+)
+img_path = 'path/to/image'
+label, conf = demo.run(img_path)
+print(conf, label)
+```
+
+Result:
+
+```bash
+0.9853 서울41너8965
+```
 
 ## Requirements
 
@@ -38,7 +60,7 @@ python model/eval.py
 
 ## Model Architecture
 
-![model](assets/model_arch.png)
+![model](assets/model.png)
 
 ## Model Performance
 
