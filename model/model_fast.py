@@ -18,9 +18,9 @@ class SpatialAttention(Layer):
                 activation='sigmoid')
 
     def call(self, inputs, **kwargs):
-        _min = tf.reduce_min(inputs, axis=-1, keepdims=True)
+        _avg = tf.reduce_mean(inputs, axis=-1, keepdims=True)
         _max = tf.reduce_max(inputs, axis=-1, keepdims=True)
-        cat = self.concat([_min, _max])
+        cat = self.concat([_max, _avg])
         x = self.conv(cat)
         mul = tf.multiply(x, inputs)
         return mul
@@ -46,7 +46,7 @@ class Attention(Layer):
         # 1x1 conv
         self.conv = Conv2D(filters=T, kernel_size=(1, 1), strides=1, padding="same",
                 kernel_initializer='he_normal',
-                activation='softmax',
+                activation='relu',
                 name="conv_char")
 
     def call(self, inputs, **kwargs):
@@ -167,7 +167,7 @@ class TinyLPR(Model):
     def __init__(self,
         time_steps=16,
         n_class=69,
-        n_feat=64,
+        n_feat=96,
         train=True,
         **kwargs):
         super(TinyLPR, self).__init__()
@@ -176,7 +176,7 @@ class TinyLPR(Model):
         self.train = train
         self.time_steps = time_steps
         # backbone model
-        self.backbone = MobileNetV3Small(0.25, n_feat)
+        self.backbone = MobileNetV3Small(1.0, n_feat)
         # head
         self.attn = Attention(n_feat, time_steps, batch_size=-1 if train else 1)
         # softmax ctc

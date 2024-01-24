@@ -194,6 +194,7 @@ if __name__ == "__main__":
     #############################################
     time_steps = 16
     len_label = 8
+    n_feat = 96
     img_shape = (64, 128, 1)
     num_class = len(load_dict())
 
@@ -201,9 +202,14 @@ if __name__ == "__main__":
     ckpt_ = glob.glob(os.path.join('checkpoints', '*.keras'))
     ckpt_.sort(key=lambda x: os.path.getmtime(x))
     ckpt_path = ckpt_[-1]
-    # ckpt_path = "checkpoints/ctc_0.9749_char_0.9971.keras"
+    # ckpt_path = ""
 
-    model = TinyLPR(time_steps=time_steps, n_class=num_class+1, train=True).build(img_shape)
+    model = TinyLPR(
+        time_steps=time_steps,
+        n_class=num_class+1,
+        n_feat=n_feat,
+        train=True
+    ).build(img_shape)
     model.load_weights(ckpt_path, by_name=True, skip_mismatch=True)
     print("load checkpoint from {}".format(ckpt_path))
 

@@ -81,10 +81,6 @@ def predict():
         x = np.expand_dims(np.expand_dims(img, axis=-1), axis=0)
         # predict
         y_pred = model.predict(x)
-        # save pred
-        # np.save('pred.npy', y_pred[-1])
-        # np.savetxt('pred.txt', y_pred[-1][0], fmt='%f')
-
         y_mask, _, y_ctc = y_pred
         y = ctc_decode_fn(y_ctc)
         print('pred:', y)

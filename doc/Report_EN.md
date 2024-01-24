@@ -139,8 +139,8 @@ Any license plate that does not meet the above conditions is considered invalid.
 | task                      | accuracy* |
 |:--------------------------|:---------:|
 | LPR w/ RE                 | 100.0 %   |
-| LPR w/o RE                | 98.73 %   |
-| Character Recognition     | 99.81 %   |
+| LPR w/o RE                | 99.10 %   |
+| Character Recognition     | 99.88 %   |
 
 \* All accuracy is calculated on unquantized model.
 
@@ -148,14 +148,14 @@ Any license plate that does not meet the above conditions is considered invalid.
 
 | task           | parameters | FLOPs       | size      |
 |:---------------|:----------:|:-----------:|:---------:|
-| LPR deployment | 32,207     | 9.58 M      | 83 KB     |
+| LPR deployment | 32,207     | 9.57 M      | 83 KB     |
 
 ### Speed of Inference
 
 | platform           | quantization | time*   | + decode | + RE    |
 |:-------------------|:------------:|--------:|---------:|--------:|
-| Apple M2           | uint8        | 0.14 ms | 0.16 ms  | 0.20 ms |
-| Intel i9-10900K    | uint8        | 0.44 ms | 0.48 ms  | 0.55 ms |
+| Apple M2           | uint8        | 0.14 ms | 0.17 ms  | 0.22 ms |
+| Intel i9-10900K    | uint8        | 0.42 ms | 0.48 ms  | 0.55 ms |
 | Coral Edge TPU     | uint8        | - ms    | - ms     | - ms    |
 
 \* Only inference time is measured, not including the time of image preprocessing and postprocessing.

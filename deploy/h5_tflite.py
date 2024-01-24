@@ -193,8 +193,8 @@ def quantization2tflite(
 if __name__ == '__main__':
     # width, height
     IMG_SIZE = (64, 128)
-    MODEL_PATH = 'checkpoints/backup/best.keras'
-    QUANTIZATION_SAMPLE_SIZE = 200
+    MODEL_PATH = 'checkpoints/backup/ctc_0.9910_char_0.9988.keras'
+    QUANTIZATION_SAMPLE_SIZE = 500
     VAL_DIR = "/home/noah/datasets/val"
 
     quantization_dataset = RepresentativeDataset(VAL_DIR, IMG_SIZE, QUANTIZATION_SAMPLE_SIZE)

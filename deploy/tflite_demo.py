@@ -31,7 +31,7 @@ def is_valid_label(label: list):
 
 
 class TFliteDemo:
-    def __init__(self, model_path, blank=85, conf_mode="mean"):
+    def __init__(self, model_path, blank=85, conf_mode="min"):
         self.blank = blank
         self.conf_mode = conf_mode
         self.interpreter = tf.lite.Interpreter(model_path=model_path)
@@ -51,7 +51,7 @@ class TFliteDemo:
         image = np.reshape(image, (1, *image.shape, 1)).astype(np.uint8)
         return image
 
-    def get_confidence(self, pred, mode="mean"):
+    def get_confidence(self, pred, mode="min"):
         conf = []
         idxs = np.argmax(pred, axis=-1)
         values = np.max(pred, axis=-1)

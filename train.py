@@ -27,21 +27,35 @@ print('GPUs: {}'.format(strategy.num_replicas_in_sync))
 #############################################
 time_steps = 16
 label_len = 8
-feat_dims = 64
+feat_dims = 96
 img_shape = (64, 128, 1)
+
+epochs = 100
+decay = 1e-4
+weight_decay = 5e-4
+
 # mode = 'ctc'
 mode = 'label'
 
-warmup = 5
-epochs = 100
-batch_size = 8 * strategy.num_replicas_in_sync
-learning_rate = 1e-4
-decay = 1e-4
-weight_decay = 5e-4
-# opt = 'sgd'
-opt = 'nadam'
-# weight_path = None
-weight_path = 'checkpoints/backup/ctc_0.9905_char_0.9986.keras'
+if mode == 'ctc':
+    warmup = 0
+    batch_size = 16 * strategy.num_replicas_in_sync
+    learning_rate = 2e-3
+    opt = 'nadam'
+    weight_path = None
+
+if mode == 'label':
+    warmup = 5
+    batch_size = 4 * strategy.num_replicas_in_sync
+    learning_rate = 1e-4
+    # opt = 'nadam'
+    opt = 'sgd'
+    weight_path = ''
+    if weight_path == '':
+        weight_path = glob.glob(os.path.join('checkpoints', '*.keras'))
+        weight_path.sort(key=lambda x: os.path.getmtime(x))
+        weight_path = weight_path[-1]
+        print('load checkpoint:', weight_path)
 
 # load from txt
 dict_path = os.path.join('data', 'label.names')
@@ -114,9 +128,7 @@ ctc_acc_callback = CTCAccuracyCallback(
 )
 
 if opt == 'sgd':
-    optimizer = SGD(learning_rate=learning_rate,
-        momentum=0.945, nesterov=True,
-        decay=decay, clipvalue=5.0)
+    optimizer = SGD(learning_rate=learning_rate, momentum=0.95, nesterov=True)
 else:
     optimizer = Nadam(learning_rate=learning_rate, decay=decay)
 
@@ -137,7 +149,7 @@ with strategy.scope():
         loss={
             'mask': DiceBCELoss(),
             # 'mat_ctc': CTCCenterLoss(n_class=num_class+1, feat_dims=feat_dims),
-            'ctc': FocalCTCLoss(alpha=0.8, gamma=2.0),
+            'ctc': FocalCTCLoss(alpha=0.8, gamma=3.0),
         },
         loss_weights={
             'mask': 0.5,
