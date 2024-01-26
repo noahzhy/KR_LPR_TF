@@ -1,2 +1,7 @@
 train/*
 test/*
+val/*
+*/*
+*.7z
+*.zip
+*.tar.gz

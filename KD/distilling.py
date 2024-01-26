@@ -47,12 +47,16 @@ class Distilling(tf.keras.models.Model):
         y_mask, y_ctc, _ = y
 
         with tf.GradientTape() as tape:
-            seg_pre, logits_pre = self.student_model(x)
+            
+            seg_pre, logits_pre, _ = self.student_model(x, training=True)
             t_seg_pre, t_logits_pre = self.teacher_model(x, training=False)
 
             ctc_loss_value = self.ctc_loss(y_ctc, tf.math.softmax(logits_pre))
             seg_loss_value = self.seg_loss(y_mask, seg_pre)
-            kd_loss_value = self.kd_loss(tf.math.softmax(t_logits_pre/self.T), tf.math.softmax(logits_pre/self.T))
+            print('ctc_loss_value:', ctc_loss_value)
+            print('seg_loss_value:', seg_loss_value)
+
+            kd_loss_value = self.kd_loss(tf.math.softmax(t_logits_pre)/self.T, tf.math.softmax(logits_pre)/self.T)
             # sum_loss_value = self.alpha * ctc_loss_value + (1-self.alpha) * kd_loss_value
             sum_loss_value = self.alpha * ctc_loss_value + self.beta * seg_loss_value + (1-self.alpha-self.beta) * kd_loss_value
 

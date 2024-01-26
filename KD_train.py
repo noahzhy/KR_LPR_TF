@@ -13,7 +13,7 @@ from model.dataloader import DataLoader
 
 # Define your learning rate schedule
 def lr_schedule(epoch, lr):
-    warmup_epochs = warmup
+    warmup_epochs = 5
     max_lr = learning_rate
     warmup_lr = 1e-6
     if epoch < warmup_epochs and warmup_epochs > 0:
@@ -24,13 +24,14 @@ def lr_schedule(epoch, lr):
 
 
 def distilling_train(t_model, s_model, train_data, test_data, t_weight, epoch=50):
-    teacher_model = t_model.load_weights(t_weight)
+    # teacher_model = t_model.load_weights(t_weight)
     # get teacher model's output without softmax
-    teacher_model = Model(teacher_model.inputs, teacher_model.outputs[:-1])
+    teacher_model = Model(t_model.inputs, t_model.outputs[:-1])
+    teacher_model.load_weights(t_weight, by_name=True, skip_mismatch=True)
     # freeze teacher model
     teacher_model.trainable = False
     # distilling model
-    dist = distilling.Distilling(student_model=s_model, teacher_model=teacher_model)
+    dist = Distilling(student_model=s_model, teacher_model=teacher_model)
     dist.compile(
         optimizer=Nadam(learning_rate=learning_rate, decay=decay),
         ctc_loss=FocalCTCLoss(alpha=0.8, gamma=3.0),
@@ -86,7 +87,7 @@ if __name__ == '__main__':
         width_multiplier=teacher_config['width_multiplier'],
         train=True,
     ).build(img_shape)
-    teacher_model.summary()
+    # teacher_model.summary()
 
     student_model = TinyLPR(
         n_class=n_class,
@@ -94,11 +95,11 @@ if __name__ == '__main__':
         width_multiplier=student_config['width_multiplier'],
         train=True,
     ).build(img_shape)
-    student_model.summary()
+    # student_model.summary()
 
     # set data path
-    train_path = "/home/noah/datasets/train"
-    val_path = "/home/noah/datasets/val"
+    train_path = "data/train"
+    val_path = "data/val"
     # set dataloader
     train_loader = DataLoader(
         train_path,
@@ -129,7 +130,7 @@ if __name__ == '__main__':
         s_model=student_model,
         train_data=train_loader,
         test_data=val_loader,
-        t_weight='checkpoints/backup/ctc_0.9946_char_0.9993.keras',
+        t_weight=r'checkpoints\backup\model.h5',
         epoch=50,
     )
 

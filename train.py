@@ -13,7 +13,7 @@ from model.dataloader import DataLoader
 from model.eval import CTCAccuracyCallback
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # set random seed
 seed = 2023
@@ -46,11 +46,12 @@ if mode == 'ctc':
 
 if mode == 'label':
     warmup = 5
-    batch_size = 4 * strategy.num_replicas_in_sync
+    batch_size = 16 * strategy.num_replicas_in_sync
     learning_rate = 1e-4
-    # opt = 'nadam'
-    opt = 'sgd'
-    weight_path = ''
+    opt = 'nadam'
+    # opt = 'sgd'
+    weight_path = r'checkpoints\backup\model.h5'
+
     if weight_path == '':
         weight_path = glob.glob(os.path.join('checkpoints', '*.keras'))
         weight_path.sort(key=lambda x: os.path.getmtime(x))
@@ -63,8 +64,8 @@ num_class = len(load_dict(dict_path))
 print('num_class:', num_class, 'len_label:', load_dict(dict_path))
 
 # set data path
-train_path = "/home/noah/datasets/train"
-val_path = "/home/noah/datasets/val"
+train_path = "data/train"
+val_path = "data/val"
 # set dataloader
 train_loader = DataLoader(
     train_path,
@@ -158,14 +159,16 @@ with strategy.scope():
         },
     )
 
-# train
-model.fit(
-    train_loader,
-    epochs=epochs,
-    callbacks=[lr_callback, tb, ctc_acc_callback],
-    verbose=2,
-    workers=128,
-    use_multiprocessing=True,
-    shuffle=True,
-    batch_size=batch_size,
-)
+
+if __name__ == '__main__':
+    # train
+    model.fit(
+        train_loader,
+        epochs=epochs,
+        callbacks=[lr_callback, tb, ctc_acc_callback],
+        # verbose=2,
+        # workers=128,
+        # use_multiprocessing=True,
+        shuffle=True,
+        batch_size=batch_size,
+    )

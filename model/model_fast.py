@@ -154,8 +154,8 @@ class MobileNetV3Small(Layer):
         for i, (k, _in, exp, out, NL, s) in enumerate(bnecks):
             self.bneck.add(BottleNeck(_in, exp, out, s, k, NL, width_multiplier, name="bneck.{}".format(i)))
 
-        # exp = _make_divisible(288 * width_multiplier, 8)
-        exp = 72
+        exp = _make_divisible(288 * width_multiplier, 8)
+        # exp = 72
         self.last = BottleNeck(16, exp, out_channels, 1, 5, tf.nn.relu, name="last")
 
     def call(self, inputs, training=True, **kwargs):
@@ -183,8 +183,8 @@ class TinyLPR(Model):
         # head
         self.attn = Attention(n_feat, time_steps, batch_size=-1 if train else 1)
         # ctc
-        self.dense = Dense(self.n_class, kernel_initializer='he_normal', name='ctc')
-        self.softmax = Activation(tf.nn.softmax, name='softmax')
+        self.dense = Dense(self.n_class, kernel_initializer='he_normal', name='dense')
+        self.softmax = Activation(tf.nn.softmax, name='ctc')
 
     def build(self, input_shape):
         inputs = Input(shape=input_shape, name='input0')
@@ -201,8 +201,8 @@ class TinyLPR(Model):
             mask = Activation(tf.nn.sigmoid, name='mask')(mask)
 
             # # concat mat and ctc
-            # mat_ctc = Concatenate(axis=-1, name='mat_ctc')([mat, ctc])
-            mat_ctc = dense
+            mat_ctc = Concatenate(axis=-1, name='mat_ctc')([mat, ctc])
+            # mat_ctc = dense
 
             return Model(
                 inputs=[inputs],
@@ -232,11 +232,6 @@ if __name__ == '__main__':
         train=True,
     ).build(input_shape)
     model.summary()
-
-    kd_model = Model(model.inputs, model.outputs[:-1])
-    kd_model.summary()
-
-    quit()
 
     # deploy model
     model = TinyLPR(
