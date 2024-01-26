@@ -154,7 +154,9 @@ class MobileNetV3Small(Layer):
         for i, (k, _in, exp, out, NL, s) in enumerate(bnecks):
             self.bneck.add(BottleNeck(_in, exp, out, s, k, NL, width_multiplier, name="bneck.{}".format(i)))
 
-        self.last = BottleNeck(16, 72, out_channels, 1, 5, tf.nn.relu, name="last")
+        # exp = _make_divisible(288 * width_multiplier, 8)
+        exp = 72
+        self.last = BottleNeck(16, exp, out_channels, 1, 5, tf.nn.relu, name="last")
 
     def call(self, inputs, training=True, **kwargs):
         x = self.conv(inputs, training=training)
@@ -167,7 +169,8 @@ class TinyLPR(Model):
     def __init__(self,
         time_steps=16,
         n_class=69,
-        n_feat=96,
+        n_feat=64,
+        width_multiplier=1.0,
         train=True,
         **kwargs):
         super(TinyLPR, self).__init__()
@@ -176,18 +179,20 @@ class TinyLPR(Model):
         self.train = train
         self.time_steps = time_steps
         # backbone model
-        self.backbone = MobileNetV3Small(1.0, n_feat)
+        self.backbone = MobileNetV3Small(width_multiplier, n_feat)
         # head
         self.attn = Attention(n_feat, time_steps, batch_size=-1 if train else 1)
-        # softmax ctc
-        self.softmax = Dense(self.n_class, kernel_initializer='he_normal', activation='softmax', name='ctc')
+        # ctc
+        self.dense = Dense(self.n_class, kernel_initializer='he_normal', name='ctc')
+        self.softmax = Activation(tf.nn.softmax, name='softmax')
 
     def build(self, input_shape):
         inputs = Input(shape=input_shape, name='input0')
 
         f_map = self.backbone(inputs, training=self.train)
         mat, c_map = self.attn(f_map)
-        ctc = self.softmax(mat)
+        dense = self.dense(mat)
+        ctc = self.softmax(dense)
 
         if self.train:
             # 8x upsample
@@ -195,8 +200,9 @@ class TinyLPR(Model):
             mask = Conv2D(self.time_steps, 1, strides=1, padding='same', kernel_initializer='he_normal', name='conv_1x1')(mask)
             mask = Activation(tf.nn.sigmoid, name='mask')(mask)
 
-            # concat mat and ctc
-            mat_ctc = Concatenate(axis=-1, name='mat_ctc')([mat, ctc])
+            # # concat mat and ctc
+            # mat_ctc = Concatenate(axis=-1, name='mat_ctc')([mat, ctc])
+            mat_ctc = dense
 
             return Model(
                 inputs=[inputs],
@@ -216,12 +222,28 @@ if __name__ == '__main__':
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     input_shape = (64, 128, 1)
     mask_len = 8
+    n_feat = 96
+    width_multiplier = 1.0
 
     # train model
-    model = TinyLPR(train=True).build(input_shape)
+    model = TinyLPR(
+        width_multiplier=width_multiplier,
+        n_feat=n_feat,
+        train=True,
+    ).build(input_shape)
     model.summary()
+
+    kd_model = Model(model.inputs, model.outputs[:-1])
+    kd_model.summary()
+
+    quit()
+
     # deploy model
-    model = TinyLPR(train=False).build(input_shape)
+    model = TinyLPR(
+        width_multiplier=width_multiplier,
+        n_feat=n_feat,
+        train=False,
+    ).build(input_shape)
     model.summary()
 
     # get flops

@@ -133,16 +133,6 @@ def rect_mask(arr, label=None, max_len=16, fill_value=255):
         x, y = np.where(mask > 0)
         min_x, max_x = np.min(x), np.max(x) + 1
         min_y, max_y = np.min(y), np.max(y) + 1
-
-        # c_x = (min_x + max_x) // 2
-        # c_y = (min_y + max_y) // 2
-        # h = (max_y - min_y) * 1.2
-        # w = (max_x - min_x) * 1.2
-        # min_x = int(c_x - w // 2)
-        # max_x = int(c_x + w // 2)
-        # min_y = int(c_y - h // 2)
-        # max_y = int(c_y + h // 2)
-
         # check bbox is valid
         if min_x < 0:       min_x = 0
         if max_x > height:  max_x = height

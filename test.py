@@ -18,9 +18,9 @@ for font in font_manager.findSystemFonts(font_dir):
 
 plt.rcParams['font.family'] = 'Happiness Sans'
 
-val_data_path = "/home/noah/datasets/val"
+val_data_path = "data/val"
 
-ckpt_ = glob.glob(os.path.join('checkpoints', '*.keras'))
+ckpt_ = glob.glob(os.path.join('checkpoints/*/', '*.keras'))
 ckpt_.sort(key=lambda x: os.path.getmtime(x))
 ckpt_path = ckpt_[-1]
 
@@ -39,7 +39,13 @@ random.seed = seed
 np.random.seed = seed
 tf.random.set_seed(seed)
 # set model
-model = TinyLPR(time_steps=time_steps, n_class=num_class, train=True).build(img_shape)
+model = TinyLPR(
+    time_steps=time_steps,
+    n_class=num_class,
+    n_feat=96,
+    width_multiplier=1.0,
+    train=True,
+).build(img_shape)
 model.load_weights(ckpt_path, by_name=True, skip_mismatch=True)
 
 
