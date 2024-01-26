@@ -1,12 +1,9 @@
 .DS_Store
-data/*
 save/*
 logs/*
 checkpoints/ctc_*.*
 README_zh.md
 # tflite demo
-od_data/*
-!data/label.names
 !save/tiny_lpr_uint8.tflite
 tmp_pb/
 *.jpg
