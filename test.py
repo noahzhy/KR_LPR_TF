@@ -20,11 +20,11 @@ plt.rcParams['font.family'] = 'Happiness Sans'
 
 val_data_path = "data/val"
 
-ckpt_ = glob.glob(os.path.join('checkpoints/*/', '*.keras'))
+ckpt_ = glob.glob(os.path.join('checkpoints/*/', '*.h5'))
 ckpt_.sort(key=lambda x: os.path.getmtime(x))
 ckpt_path = ckpt_[-1]
 
-ckpt_path = r"checkpoints\backup\model.h5"
+# ckpt_path = r"checkpoints\backup\model.h5"
 
 # set train params
 num_class = len(load_dict()) + 1

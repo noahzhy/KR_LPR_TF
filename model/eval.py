@@ -122,12 +122,12 @@ class CTCAccuracyCallback(tf.keras.callbacks.Callback):
         if t_ctc_acc >= self.best_ctc_acc:
             self.best_ctc_acc = t_ctc_acc
             self.model.save(
-                "checkpoints/ctc_{:.4f}_char_{:.4f}.keras".format(t_ctc_acc, t_char_acc))
+                "checkpoints/ctc_{:.4f}_char_{:.4f}.h5".format(t_ctc_acc, t_char_acc))
 
         if t_char_acc >= self.best_char_acc:
             self.best_char_acc = t_char_acc
             self.model.save(
-                "checkpoints/ctc_{:.4f}_char_{:.4f}.keras".format(t_ctc_acc, t_char_acc))
+                "checkpoints/ctc_{:.4f}_char_{:.4f}.h5".format(t_ctc_acc, t_char_acc))
 
         # Save logs to TensorBoard
         if self.log_dir:
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     num_class = len(load_dict())
 
     # load checkpoint from latest file
-    ckpt_ = glob.glob(os.path.join('checkpoints', '*.keras'))
+    ckpt_ = glob.glob(os.path.join('checkpoints', '*.h5'))
     ckpt_.sort(key=lambda x: os.path.getmtime(x))
     ckpt_path = ckpt_[-1]
     # ckpt_path = ""

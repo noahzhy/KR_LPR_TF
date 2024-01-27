@@ -13,7 +13,7 @@ from model.dataloader import DataLoader
 from model.eval import CTCAccuracyCallback
 
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # set random seed
 seed = 2023
@@ -24,10 +24,18 @@ tf.random.set_seed(seed)
 strategy = tf.distribute.MirroredStrategy()
 print('GPUs: {}'.format(strategy.num_replicas_in_sync))
 
+# ### TPU
+# resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='')
+# tf.config.experimental_connect_to_cluster(resolver)
+# tf.tpu.experimental.initialize_tpu_system(resolver)
+# strategy = tf.distribute.TPUStrategy(resolver)
+# print('TPUs: {}'.format(strategy.num_replicas_in_sync))
+
 #############################################
 time_steps = 16
 label_len = 8
 feat_dims = 96
+width_multiplier = 1.0
 img_shape = (64, 128, 1)
 
 epochs = 100
@@ -39,10 +47,10 @@ mode = 'label'
 
 if mode == 'ctc':
     warmup = 0
-    batch_size = 16 * strategy.num_replicas_in_sync
-    learning_rate = 2e-3
+    batch_size = 32 * strategy.num_replicas_in_sync
+    learning_rate = 5e-3
     opt = 'nadam'
-    weight_path = None
+    weight_path = ""
 
 if mode == 'label':
     warmup = 5
@@ -50,10 +58,10 @@ if mode == 'label':
     learning_rate = 1e-4
     opt = 'nadam'
     # opt = 'sgd'
-    weight_path = r'checkpoints\backup\model.h5'
+    weight_path = r'checkpoints\backup\ctc_0.9829_char_0.9976.h5'
 
     if weight_path == '':
-        weight_path = glob.glob(os.path.join('checkpoints', '*.keras'))
+        weight_path = glob.glob(os.path.join('checkpoints', '*.h5'))
         weight_path.sort(key=lambda x: os.path.getmtime(x))
         weight_path = weight_path[-1]
         print('load checkpoint:', weight_path)
@@ -135,8 +143,15 @@ else:
 
 print('optimizer: {}'.format(optimizer.__class__.__name__))
 
+
 with strategy.scope():
-    model = TinyLPR(time_steps=time_steps, n_class=num_class+1, n_feat=feat_dims, train=True).build(img_shape)
+    model = TinyLPR(
+        time_steps=time_steps,
+        n_class=num_class+1,
+        n_feat=feat_dims,
+        width_multiplier=width_multiplier,
+        train=True,
+    ).build(img_shape)
     model.summary()
 
     # load checkpoint

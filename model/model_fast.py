@@ -62,6 +62,15 @@ class Attention(Layer):
 
         return out, char_map
 
+    def get_config(self):
+        config = super(Attention, self).get_config()
+        config.update({
+            'C': self.C,
+            'T': self.T,
+            'batch_size': self.bs,
+        })
+        return config
+
 
 def upsample(x, up_size=2):
     nn = Sequential()
@@ -131,6 +140,8 @@ def _make_divisible(v, divisor, min_value=16):
 class MobileNetV3Small(Layer):
     def __init__(self, width_multiplier=1.0, out_channels=128, **kwargs):
         super(MobileNetV3Small, self).__init__()
+        self.width_multiplier = width_multiplier
+        self.out_channels = out_channels
 
         self.conv = Sequential([
             Conv2D(filters=16, kernel_size=(3, 3), strides=(2, 2), padding="same", use_bias=False, kernel_initializer='he_normal'),
@@ -164,12 +175,20 @@ class MobileNetV3Small(Layer):
         x = self.last(x, training=training)
         return x
 
+    def get_config(self):
+        config = super(MobileNetV3Small, self).get_config()
+        config.update({
+            'width_multiplier': self.width_multiplier,
+            'out_channels': self.out_channels,
+        })
+        return config
+
 
 class TinyLPR(Model):
     def __init__(self,
         time_steps=16,
         n_class=69,
-        n_feat=64,
+        n_feat=96,
         width_multiplier=1.0,
         train=True,
         **kwargs):
@@ -215,6 +234,16 @@ class TinyLPR(Model):
             outputs=[ctc],
             name='tinyLPR',
         )
+
+    def get_config(self):
+        config = super(TinyLPR, self).get_config()
+        config.update({
+            'time_steps': self.time_steps,
+            'n_class': self.n_class,
+            'n_feat': self.n_feat,
+            'train': self.train,
+        })
+        return config
 
 
 if __name__ == '__main__':

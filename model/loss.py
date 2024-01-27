@@ -72,6 +72,14 @@ class FocalCTCLoss(Layer):
         focal_ctc_loss = tf.multiply(tf.multiply(self.alpha, tf.pow((1 - p), self.gamma)), loss)
         return tf.reduce_mean(focal_ctc_loss)
 
+    def get_config(self):
+        config = super(FocalCTCLoss, self).get_config()
+        config.update({
+            'alpha': self.alpha,
+            'gamma': self.gamma,
+        })
+        return config
+
 
 class CELoss(Layer):
     def __init__(self, name="ce_loss"):
