@@ -53,9 +53,6 @@ class Distilling(tf.keras.models.Model):
 
             ctc_loss_value = self.ctc_loss(y_ctc, tf.math.softmax(logits_pre))
             seg_loss_value = self.seg_loss(y_mask, seg_pre)
-            print('ctc_loss_value:', ctc_loss_value)
-            print('seg_loss_value:', seg_loss_value)
-
             kd_loss_value = self.kd_loss(tf.math.softmax(t_logits_pre)/self.T, tf.math.softmax(logits_pre)/self.T)
             # sum_loss_value = self.alpha * ctc_loss_value + (1-self.alpha) * kd_loss_value
             sum_loss_value = self.alpha * ctc_loss_value + self.beta * seg_loss_value + (1-self.alpha-self.beta) * kd_loss_value

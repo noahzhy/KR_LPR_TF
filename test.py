@@ -20,11 +20,11 @@ plt.rcParams['font.family'] = 'Happiness Sans'
 
 val_data_path = "data/val"
 
-ckpt_ = glob.glob(os.path.join('checkpoints/*/', '*.h5'))
+ckpt_ = glob.glob(os.path.join('checkpoints/', '*.*'))
 ckpt_.sort(key=lambda x: os.path.getmtime(x))
 ckpt_path = ckpt_[-1]
 
-# ckpt_path = r"checkpoints\backup\model.h5"
+# ckpt_path = "checkpoints/backup/ctc_0.9946_char_0.9993.keras"
 
 # set train params
 num_class = len(load_dict()) + 1
@@ -42,11 +42,11 @@ tf.random.set_seed(seed)
 model = TinyLPR(
     time_steps=time_steps,
     n_class=num_class,
-    n_feat=96,
-    width_multiplier=1.0,
+    n_feat=64,
+    width_multiplier=0.25,
     train=True,
 ).build(img_shape)
-model.load_weights(ckpt_path, by_name=True, skip_mismatch=True)
+model.load_weights(ckpt_path)
 
 
 def get_confidence(y_pred):

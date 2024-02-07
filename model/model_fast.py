@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import *
@@ -165,9 +163,9 @@ class MobileNetV3Small(Layer):
         for i, (k, _in, exp, out, NL, s) in enumerate(bnecks):
             self.bneck.add(BottleNeck(_in, exp, out, s, k, NL, width_multiplier, name="bneck.{}".format(i)))
 
-        exp = _make_divisible(288 * width_multiplier, 8)
-        # exp = 72
-        self.last = BottleNeck(16, exp, out_channels, 1, 5, tf.nn.relu, name="last")
+        # exp_size = _make_divisible(288 * width_multiplier, 8)
+        exp_size = 72
+        self.last = BottleNeck(16, exp_size, out_channels, 1, 5, tf.nn.relu, name="last")
 
     def call(self, inputs, training=True, **kwargs):
         x = self.conv(inputs, training=training)
@@ -247,12 +245,13 @@ class TinyLPR(Model):
 
 
 if __name__ == '__main__':
+    import os
     # disable gpu
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     input_shape = (64, 128, 1)
     mask_len = 8
-    n_feat = 96
-    width_multiplier = 1.0
+    n_feat = 64
+    width_multiplier = 0.25
 
     # train model
     model = TinyLPR(
@@ -271,7 +270,7 @@ if __name__ == '__main__':
     model.summary()
 
     # get flops
-    flops = get_flops(model, 1)
+    flops = get_flops(model, batch_size=1)
     flops = round(flops / 10.0 ** 6, 2)
     print(f"FLOPS: {flops} M")
 

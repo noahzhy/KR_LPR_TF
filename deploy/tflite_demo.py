@@ -85,7 +85,7 @@ if __name__ == '__main__':
     demo = TFliteDemo('save/tiny_lpr_uint8.tflite')
 
     # get random image
-    val_path = "/home/noah/datasets/val"
+    val_path = "data/val"
     img_list = glob.glob(os.path.join(val_path, '*.jpg'))
     # random sample
     random.shuffle(img_list)

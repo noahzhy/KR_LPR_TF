@@ -14,7 +14,7 @@ Inspired by this, the real-time South Korean license plate recognition model pro
 
 As shown in the figure below, the network is designed for multi-task learning, which includes two tasks: license plate numbers segmentation and license plate recognition. During training, the model generates segmentation results and license plate results at the same time, but in the actual deployment of the inference model, we remove the head responsible for the segmentation task to further simplify the model and improve the inference speed.
 
-![model](../assets/model_arch.svg)
+![model](../assets/model_arch.png)
 
 Although the char-level segmentation task is not the main task of this project, it can still improve the accuracy of license plate recognition. The model can learn the structure information of the license plate better, thereby improving the accuracy of license plate recognition.
 

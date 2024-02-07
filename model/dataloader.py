@@ -200,13 +200,14 @@ class DataLoader(Sequence):
         self.shuffle = shuffle
         self.data_augmentation = data_augmentation
         print('Found {} images'.format(len(self.imgs)))
+
+        self.img_raw = self.imgs
         self.on_epoch_end()
-        # # pick 128 only
-        # self.imgs = self.imgs[:1280]
 
     def on_epoch_end(self):
         if self.shuffle:
-            np.random.shuffle(self.imgs)
+            np.random.shuffle(self.img_raw)
+            self.imgs = self.img_raw[:2560]
 
     def __len__(self):
         return int(np.floor(len(self.imgs) / float(self.batch_size)))

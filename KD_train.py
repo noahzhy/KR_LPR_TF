@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import *
 from tensorflow.keras.losses import *
 from tensorflow.keras.callbacks import *
-from tensorflow.keras.optimizers import *
+from tensorflow.keras.optimizers.legacy import *
 
 from KD.distilling import *
 from model.loss import *
@@ -33,7 +33,7 @@ def distilling_train(t_model, s_model, train_data, test_data, t_weight, epoch=50
     # distilling model
     dist = Distilling(student_model=s_model, teacher_model=teacher_model)
     dist.compile(
-        optimizer=Nadam(learning_rate=learning_rate, decay=decay),
+        optimizer=Nadam(learning_rate=learning_rate),
         ctc_loss=FocalCTCLoss(alpha=0.8, gamma=3.0),
         seg_loss=DiceBCELoss(),
         kd_loss=KLDivergence(),
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     student_config = {
         'width_multiplier': 0.25,
-        'feat_dims': 64,
+        'feat_dims': 96,
     }
 
     teacher_model = TinyLPR(
@@ -98,8 +98,8 @@ if __name__ == '__main__':
     # student_model.summary()
 
     # set data path
-    train_path = "data/train"
-    val_path = "data/val"
+    train_path = "/Users/haoyu/Downloads/lpr/train"
+    val_path = "/Users/haoyu/Downloads/lpr/val"
     # set dataloader
     train_loader = DataLoader(
         train_path,
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         s_model=student_model,
         train_data=train_loader,
         test_data=val_loader,
-        t_weight=r'checkpoints\backup\model.h5',
+        t_weight='checkpoints/backup/ctc_0.9951_char_0.9993.h5',
         epoch=50,
     )
 

@@ -34,8 +34,8 @@ print('GPUs: {}'.format(strategy.num_replicas_in_sync))
 #############################################
 time_steps = 16
 label_len = 8
-feat_dims = 96
-width_multiplier = 1.0
+feat_dims = 64
+width_multiplier = 0.25
 img_shape = (64, 128, 1)
 
 epochs = 100
@@ -54,11 +54,11 @@ if mode == 'ctc':
 
 if mode == 'label':
     warmup = 5
-    batch_size = 16 * strategy.num_replicas_in_sync
+    batch_size = 8 * strategy.num_replicas_in_sync
     learning_rate = 1e-4
     opt = 'nadam'
     # opt = 'sgd'
-    weight_path = r'checkpoints\backup\ctc_0.9829_char_0.9976.h5'
+    weight_path = 'checkpoints/ctc_0.9915_char_0.9989.h5'
 
     if weight_path == '':
         weight_path = glob.glob(os.path.join('checkpoints', '*.h5'))
@@ -72,8 +72,8 @@ num_class = len(load_dict(dict_path))
 print('num_class:', num_class, 'len_label:', load_dict(dict_path))
 
 # set data path
-train_path = "data/train"
-val_path = "data/val"
+train_path = "/Users/haoyu/Downloads/lpr/train"
+val_path = "/Users/haoyu/Downloads/lpr/val"
 # set dataloader
 train_loader = DataLoader(
     train_path,
@@ -137,9 +137,13 @@ ctc_acc_callback = CTCAccuracyCallback(
 )
 
 if opt == 'sgd':
-    optimizer = SGD(learning_rate=learning_rate, momentum=0.95, nesterov=True)
+    optimizer = SGD(
+        learning_rate=learning_rate,
+        momentum=0.95,
+        nesterov=True,
+    )
 else:
-    optimizer = Nadam(learning_rate=learning_rate, decay=decay)
+    optimizer = Nadam(learning_rate=learning_rate)
 
 print('optimizer: {}'.format(optimizer.__class__.__name__))
 

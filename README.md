@@ -12,7 +12,7 @@ This repository is based on [Self-supervised Implicit Glyph Attention for Text R
 
 ## Requirements
 
-- Python 3.10.13
+- Python 3.11.6
 - Tensorflow 2.15.0
 - numba
 - numpy
@@ -47,8 +47,8 @@ The best model saved in `./checkpoints/backup/best.keras`.
 | task                      | accuracy  |
 |:--------------------------|----------:|
 | LPR w/ RE                 | 100.00 %  |
-| LPR w/o RE                | 99.10 %   |
-| Character Recognition     | 99.88 %   |
+| LPR w/o RE                | 99.15 %   |
+| Character Recognition     | 99.89 %   |
 
 \* All accuracy is calculated on unquantized model
 
@@ -56,7 +56,7 @@ The best model saved in `./checkpoints/backup/best.keras`.
 
 | task           | parameters | FLOPs       | size      |
 |:--------------:|:----------:|:-----------:|:---------:|
-| LPR deployment | 32,207     | 9.57 M      | 83 KB     |
+| LPR deployment | 32,207     | 9.58 M      | 83 KB     |
 
 ### Speed of Inference
 

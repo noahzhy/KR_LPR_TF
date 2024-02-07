@@ -1,10 +1,5 @@
 # it's a script to quantization model to specific data type
-import os
-import sys
-import glob
-import time
-import random
-import shutil
+import os, sys, glob, time, random, shutil
 
 import numpy as np
 from PIL import Image
@@ -19,11 +14,6 @@ from model.model_fast import *
 
 # use cpu
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-# gpu visible
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1,2,3"
-
-# tf.keras.backend.set_learning_phase(0)
-# tf.compat.v1.enable_eager_execution()
 
 
 class RepresentativeDataset:
@@ -66,30 +56,15 @@ def saved_model2pb(
     batch_size = 1
     #############################################
 
-    # # set model
+    # set model
     model = TinyLPR(
         time_steps=time_steps,
         n_class=69,
+        width_multiplier=0.25,
+        n_feat=64,
         train=False,
     ).build(img_shape)
     model.load_weights(saved_model_dir, by_name=True, skip_mismatch=True)
-    # model = tf.keras.models.Model(inputs=model.inputs, outputs=model.outputs[-1])
-
-    # print model inputs and outputs
-    print(model.inputs)
-    print(model.outputs)
-
-    # model = tf.keras.models.load_model(
-    #     saved_model_dir,
-    #     custom_objects={
-    #         'MobileNetV3Small': MobileNetV3Small,
-    #         'LRASPP': LRASPP,
-    #     }
-    # )
-    # model = tf.keras.models.Model(
-    #     model.get_layer(name=input_node).input,
-    #     model.get_layer(name=output_node).output,
-    # )
 
     # Convert Keras model to ConcreteFunction
     full_model = tf.function(lambda x: model(x))
@@ -99,9 +74,6 @@ def saved_model2pb(
             model.inputs[0].dtype
         )
     )
-
-    # check input and output
-    print(full_model.outputs[0])
 
     # Get frozen ConcreteFunction
     frozen_func = convert_variables_to_constants_v2(full_model)
@@ -126,15 +98,14 @@ def saved_model2pb(
 
 
 def quantization2tflite(
-        model_path,
-        input_node="x",
-        output_node="Identity",
-        mode="pb",
-        quantization_mode=tf.uint8,
-        save_name="model_uint8",
-        representative_dataset=None,
-        save_dir="save",
-    ):
+    model_path,
+    input_node="x",
+    output_node="Identity",
+    mode="pb",
+    quantization_mode=tf.uint8,
+    save_name="model_uint8",
+    representative_dataset=None,
+    save_dir="save"):
     assert mode in ["pb", "saved_model", "h5"]
     
     if mode == "h5":
@@ -193,9 +164,9 @@ def quantization2tflite(
 if __name__ == '__main__':
     # width, height
     IMG_SIZE = (64, 128)
-    MODEL_PATH = 'checkpoints/backup/ctc_0.9910_char_0.9988.keras'
-    QUANTIZATION_SAMPLE_SIZE = 500
-    VAL_DIR = "/home/noah/datasets/val"
+    MODEL_PATH = 'checkpoints/backup/ctc_0.9915_char_0.9989.h5'
+    QUANTIZATION_SAMPLE_SIZE = 1000
+    VAL_DIR = "/Users/haoyu/Downloads/lpr/val"
 
     quantization_dataset = RepresentativeDataset(VAL_DIR, IMG_SIZE, QUANTIZATION_SAMPLE_SIZE)
 

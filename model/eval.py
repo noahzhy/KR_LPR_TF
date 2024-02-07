@@ -180,13 +180,13 @@ class CTCAccuracyCallback(tf.keras.callbacks.Callback):
 
         return total_ctc, total_char, total_re, t_num, t_kor
 
-
 # main
 if __name__ == "__main__":
     from model_fast import *
+    # from model import TinyLPR
     from dataloader import DataLoader
     # cpu only
-    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     seed = 2023
     random.seed = seed
     np.random.seed = seed
@@ -194,27 +194,30 @@ if __name__ == "__main__":
     #############################################
     time_steps = 16
     len_label = 8
-    n_feat = 96
+    n_feat = 64 # 96
+    width_multiplier = 0.25 # 1.0
     img_shape = (64, 128, 1)
     num_class = len(load_dict())
 
     # load checkpoint from latest file
-    ckpt_ = glob.glob(os.path.join('checkpoints', '*.h5'))
+    ckpt_ = glob.glob(os.path.join('checkpoints/', '*.*'))
     ckpt_.sort(key=lambda x: os.path.getmtime(x))
     ckpt_path = ckpt_[-1]
-    # ckpt_path = ""
+    ckpt_path = "checkpoints/backup/ctc_0.9915_char_0.9989.h5"
+    # ckpt_path = "checkpoints/backup/ctc_0.9951_char_0.9993.h5"
 
     model = TinyLPR(
         time_steps=time_steps,
         n_class=num_class+1,
         n_feat=n_feat,
+        width_multiplier=width_multiplier,
         train=True
     ).build(img_shape)
     model.load_weights(ckpt_path, by_name=True, skip_mismatch=True)
     print("load checkpoint from {}".format(ckpt_path))
 
     val_loader = DataLoader(
-        "/home/noah/datasets/val",
+        "/Users/haoyu/Downloads/lpr/val",
         img_shape=img_shape,
         time_steps=time_steps,
         label_len=len_label,
