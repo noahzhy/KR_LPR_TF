@@ -129,7 +129,7 @@ class Attention(nn.Module):
         bs, h, w, _ = inputs.shape
         _avg = jnp.mean(inputs, axis=-1, keepdims=True)
         _max = jnp.max(inputs, axis=-1, keepdims=True)
-        x = jnp.concatenate([_avg, _max], axis=-1)
+        x = jnp.concatenate([_max, _avg], axis=-1)
         x = nn.Conv(features=1, kernel_size=(1, 1), use_bias=False)(x)
         x = nn.sigmoid(x)
         # mul with inputs
@@ -138,7 +138,7 @@ class Attention(nn.Module):
 
     def char_map(self, inputs):
         x = nn.Conv(features=self.temporal, kernel_size=(1, 1), use_bias=True)(inputs)
-        x = nn.softmax(x)
+        x = nn.relu(x)
         return x
 
     @nn.compact

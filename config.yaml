@@ -1,0 +1,38 @@
+seed: 2023
+
+# model config
+# mode: 'ctc'
+mode: 'label'
+time_steps: 16
+label_len: 8
+feat_dims: 64
+width_multiplier: 0.25
+img_shape: [64, 128, 1]
+weight_path: 'checkpoints/ctc_0.9915_char_0.9989.h5'
+
+# train config
+warmup: 5
+batch_size: 8
+learning_rate: 0.0001
+epochs: 100
+decay: 0.0001
+weight_decay: 0.0005
+# cpu: "-1", single gpu: "0", multi gpus: "0,1,2,3"
+gpus: "-1"
+# gpus: "0,1,2,3"
+
+# optimizer config
+optimizer:
+  name: 'nadam'
+  sgd:
+    momentum: 0.95
+    nesterov: True
+
+loss_weights:
+  dice_bce_loss: 0.5
+  focal_ctc_loss: 1.5
+  ctc_center_loss: 0.01
+
+focal_ctc_loss:
+    alpha: 0.8
+    gamma: 3.0

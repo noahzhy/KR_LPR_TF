@@ -1,5 +1,6 @@
 import os, glob, math, random, shutil
 
+import yaml
 import tensorboard as tb
 import tensorflow as tf
 from tensorflow.keras.callbacks import *
@@ -13,37 +14,24 @@ from model.dataloader import DataLoader
 from model.eval import CTCAccuracyCallback
 
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+# load yaml
+cfg = yaml.load(open('config.yaml', 'r'), Loader=yaml.FullLoader)
+
+os.environ["CUDA_VISIBLE_DEVICES"] = cfg['gpus']
 
 # set random seed
-seed = 2023
+seed = cfg['seed']
 random.seed = seed
 np.random.seed = seed
 tf.random.set_seed(seed)
 
+#############################################
+img_shape = (*cfg['img_shape'],)
+mode = cfg['mode']
+epochs = cfg['epochs']
+#############################################
 strategy = tf.distribute.MirroredStrategy()
 print('GPUs: {}'.format(strategy.num_replicas_in_sync))
-
-# ### TPU
-# resolver = tf.distribute.cluster_resolver.TPUClusterResolver(tpu='')
-# tf.config.experimental_connect_to_cluster(resolver)
-# tf.tpu.experimental.initialize_tpu_system(resolver)
-# strategy = tf.distribute.TPUStrategy(resolver)
-# print('TPUs: {}'.format(strategy.num_replicas_in_sync))
-
-#############################################
-time_steps = 16
-label_len = 8
-feat_dims = 64
-width_multiplier = 0.25
-img_shape = (64, 128, 1)
-
-epochs = 100
-decay = 1e-4
-weight_decay = 5e-4
-
-# mode = 'ctc'
-mode = 'label'
 
 if mode == 'ctc':
     warmup = 0
@@ -53,12 +41,11 @@ if mode == 'ctc':
     weight_path = ""
 
 if mode == 'label':
-    warmup = 5
-    batch_size = 8 * strategy.num_replicas_in_sync
-    learning_rate = 1e-4
-    opt = 'nadam'
-    # opt = 'sgd'
-    weight_path = 'checkpoints/ctc_0.9915_char_0.9989.h5'
+    warmup = cfg['warmup']
+    batch_size = cfg['batch_size'] * strategy.num_replicas_in_sync
+    learning_rate = cfg['learning_rate']
+    opt = cfg['optimizer']['name']
+    weight_path = cfg['weight_path']
 
     if weight_path == '':
         weight_path = glob.glob(os.path.join('checkpoints', '*.h5'))
@@ -67,9 +54,8 @@ if mode == 'label':
         print('load checkpoint:', weight_path)
 
 # load from txt
-dict_path = os.path.join('data', 'label.names')
-num_class = len(load_dict(dict_path))
-print('num_class:', num_class, 'len_label:', load_dict(dict_path))
+num_class = len(load_dict("data/label.names"))
+print('num_class:', num_class)
 
 # set data path
 train_path = "/Users/haoyu/Downloads/lpr/train"
@@ -79,10 +65,10 @@ train_loader = DataLoader(
     train_path,
     mode=mode,
     img_shape=img_shape,
-    time_steps=time_steps,
-    label_len=label_len,
+    time_steps=cfg['time_steps'],
+    label_len=cfg['label_len'],
     num_class=num_class,
-    batch_size=batch_size,
+    batch_size=cfg['batch_size'],
     data_augmentation=True,
     shuffle=True,
 )
@@ -90,8 +76,8 @@ val_loader = DataLoader(
     val_path,
     mode=mode,
     img_shape=img_shape,
-    time_steps=time_steps,
-    label_len=label_len,
+    time_steps=cfg['time_steps'],
+    label_len=cfg['label_len'],
     num_class=num_class,
     batch_size=1024,
     shuffle=False,
@@ -114,7 +100,7 @@ tb = TensorBoard(
     embeddings_metadata=None,
 )
 
-# Define your learning rate schedule
+# learning rate schedule
 def lr_schedule(epoch, lr):
     warmup_epochs = warmup
     max_lr = learning_rate
@@ -139,8 +125,8 @@ ctc_acc_callback = CTCAccuracyCallback(
 if opt == 'sgd':
     optimizer = SGD(
         learning_rate=learning_rate,
-        momentum=0.95,
-        nesterov=True,
+        momentum=cfg['optimizer']['sgd']['momentum'],
+        nesterov=cfg['optimizer']['sgd']['nesterov'],
     )
 else:
     optimizer = Nadam(learning_rate=learning_rate)
@@ -150,10 +136,10 @@ print('optimizer: {}'.format(optimizer.__class__.__name__))
 
 with strategy.scope():
     model = TinyLPR(
-        time_steps=time_steps,
+        time_steps=cfg['time_steps'],
         n_class=num_class+1,
-        n_feat=feat_dims,
-        width_multiplier=width_multiplier,
+        n_feat=cfg['feat_dims'],
+        width_multiplier=cfg['width_multiplier'],
         train=True,
     ).build(img_shape)
     model.summary()
@@ -168,13 +154,16 @@ with strategy.scope():
         optimizer=optimizer,
         loss={
             'mask': DiceBCELoss(),
-            # 'mat_ctc': CTCCenterLoss(n_class=num_class+1, feat_dims=feat_dims),
-            'ctc': FocalCTCLoss(alpha=0.8, gamma=3.0),
+            # 'mat_ctc': CTCCenterLoss(n_class=num_class+1, feat_dims=cfg['feat_dims']),
+            'ctc': FocalCTCLoss(
+                alpha=cfg['focal_ctc_loss']['alpha'],
+                gamma=cfg['focal_ctc_loss']['gamma'],
+            ),
         },
         loss_weights={
-            'mask': 0.5,
-            # 'mat_ctc': 0.01,
-            'ctc': 1.5,
+            'mask': cfg['loss_weights']['dice_bce_loss'],
+            # 'mat_ctc': cfg['loss_weights']['ctc_center_loss'],
+            'ctc': cfg['loss_weights']['focal_ctc_loss'],
         },
     )
 
@@ -183,11 +172,11 @@ if __name__ == '__main__':
     # train
     model.fit(
         train_loader,
-        epochs=epochs,
+        epochs=cfg['epochs'],
         callbacks=[lr_callback, tb, ctc_acc_callback],
         # verbose=2,
         # workers=128,
         # use_multiprocessing=True,
         shuffle=True,
-        batch_size=batch_size,
+        batch_size=cfg['batch_size'],
     )

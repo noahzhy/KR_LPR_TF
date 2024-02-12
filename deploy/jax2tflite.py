@@ -61,8 +61,8 @@ tf_predict = tf.function(
     autograph=False)
 
 IMG_SIZE = (64, 128)
-QUANTIZATION_SAMPLE_SIZE = 10
-VAL_DIR = "data/val"
+QUANTIZATION_SAMPLE_SIZE = 1000
+VAL_DIR = "/Users/haoyu/Downloads/lpr/val"
 quantization_dataset = RepresentativeDataset(VAL_DIR, IMG_SIZE, QUANTIZATION_SAMPLE_SIZE)
 converter = tf.lite.TFLiteConverter.from_concrete_functions(
     [tf_predict.get_concrete_function()], tf_predict)
