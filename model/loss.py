@@ -1,6 +1,7 @@
 import os, time, math
 from itertools import groupby
 
+import numpy as np
 import tensorflow as tf
 from keras.layers import *
 from keras import backend as K
@@ -12,14 +13,6 @@ def ctc_batch_cost(y_true, y_pred, input_length, label_length):
     label_length = tf.cast(tf.squeeze(label_length, axis=-1), tf.int32)
     input_length = tf.cast(tf.squeeze(input_length, axis=-1), tf.int32)
     sparse_label = tf.cast(K.ctc_label_dense_to_sparse(y_true, label_length), tf.int32)
-    # sparse_label = tf.sparse.from_dense(y_true)
-    # print('sparse_label', sparse_label)
-    # return tf.compat.v1.nn.ctc_loss(
-    #     inputs=tf.math.log(y_pred + eps),
-    #     labels=sparse_label,
-    #     sequence_length=input_length,
-    #     time_major=False,
-    # )
     return tf.compat.v1.nn.ctc_loss_v2(
         labels=sparse_label,
         logits=tf.math.log(y_pred + eps),
@@ -28,6 +21,22 @@ def ctc_batch_cost(y_true, y_pred, input_length, label_length):
         logits_time_major=False,
         blank_index=-1,
     )
+
+
+class FocalCTCLoss(Layer):
+    def __init__(self, alpha=2.0, gamma=3.0, name="focal_ctc_loss", **kwargs):
+        super(FocalCTCLoss, self).__init__(name=name, **kwargs)
+        self.loss_fn = ctc_batch_cost
+        self.alpha = alpha
+        self.gamma = gamma
+
+    def call(self, y_true, y_pred):
+        input_length = K.tile([[K.shape(y_pred)[1]]], [K.shape(y_pred)[0], 1])
+        label_length = K.tile([[K.shape(y_true)[1]]], [K.shape(y_true)[0], 1])
+        loss = self.loss_fn(y_true, y_pred, input_length, label_length)
+        p = tf.exp(-loss)
+        focal_ctc_loss = tf.multiply(tf.multiply(self.alpha, tf.pow((1 - p), self.gamma)), loss)
+        return tf.reduce_mean(focal_ctc_loss)
 
 
 # Sparse Categorical Crossentropy Loss
@@ -56,21 +65,6 @@ class SCELoss(Layer):
         loss = tf.reduce_mean(loss)
         return loss
 
-
-class FocalCTCLoss(Layer):
-    def __init__(self, alpha=2.0, gamma=3.0, name="focal_ctc_loss", **kwargs):
-        super(FocalCTCLoss, self).__init__(name=name, **kwargs)
-        self.loss_fn = ctc_batch_cost
-        self.alpha = alpha
-        self.gamma = gamma
-
-    def call(self, y_true, y_pred):
-        input_length = K.tile([[K.shape(y_pred)[1]]], [K.shape(y_pred)[0], 1])
-        label_length = K.tile([[K.shape(y_true)[1]]], [K.shape(y_true)[0], 1])
-        loss = self.loss_fn(y_true, y_pred, input_length, label_length)
-        p = tf.exp(-loss)
-        focal_ctc_loss = tf.multiply(tf.multiply(self.alpha, tf.pow((1 - p), self.gamma)), loss)
-        return tf.reduce_mean(focal_ctc_loss)
 
     def get_config(self):
         config = super(FocalCTCLoss, self).get_config()
@@ -406,17 +400,29 @@ if __name__ == "__main__":
     # cpu mode
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
-    loss = FocalCTCLoss()
-    y_pred = tf.linspace(0.0, 1.0, 3 * 9 * 69)
-    y_pred = tf.reshape(y_pred, shape=(3, 9, 69))
-    y_true = tf.constant([
-        [67,  2,  5, 31,  2,  8,  3,  7,],
-        [58,  3,  7, 45,  6,  7,  5,  2,],
-        [67,  6,  0, 17,  5,  0,  0,  5,]], dtype=tf.int32)
-    s = time.process_time()
-    v = loss(y_true, y_pred)
-    print("time: {:.4f} ms".format((time.process_time() - s) * 1000))
-    print(v)
+    # loss = FocalCTCLoss()
+    # y_pred = tf.linspace(0.0, 1.0, 3 * 9 * 69)
+    # y_pred = tf.reshape(y_pred, shape=(3, 9, 69))
+    # y_true = tf.constant([
+    #     [67,  2,  5, 31,  2,  8,  3,  7,],
+    #     [58,  3,  7, 45,  6,  7,  5,  2,],
+    #     [67,  6,  0, 17,  5,  0,  0,  5,]], dtype=tf.int32)
+    # s = time.process_time()
+    # v = loss(y_true, y_pred)
+    # print("time: {:.4f} ms".format((time.process_time() - s) * 1000))
+    # print(v)
+
+    dice = DiceBCELoss()
+    logits = np.zeros((1, 10, 10, 3))
+    logits[:, 2:8, 2:8, :] = 1
+    # sigmoid
+    # logits = tf.nn.sigmoid(logits)
+
+    targets = np.zeros((1, 10, 10, 3))
+    targets[:, 2:8, 2:8, :] = 1
+    v = dice(targets, logits)
+    mean = tf.reduce_mean(v)
+    print(mean)
 
     # loss = CTCCenterLoss(feat_dims=96)
     # y_pred = tf.random.uniform(shape=(3, 16, 96))
