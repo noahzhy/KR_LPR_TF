@@ -31,7 +31,7 @@ def is_valid_label(label: list):
 
 
 class TFliteDemo:
-    def __init__(self, model_path, blank=85, conf_mode="min"):
+    def __init__(self, model_path, blank=68, conf_mode="min"):
         self.blank = blank
         self.conf_mode = conf_mode
         self.interpreter = tf.lite.Interpreter(model_path=model_path)

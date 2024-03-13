@@ -134,11 +134,11 @@ def quantization2tflite(
             output_arrays=output_node,
         )
     
-    # converter.experimental_enable_resource_variables = True
+    converter.experimental_enable_resource_variables = True
     # only for test
     converter.allow_custom_ops = True
     converter.experimental_new_converter = True
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_LATENCY]
     converter.representative_dataset = representative_dataset
 
     converter.target_spec.supported_ops = [
