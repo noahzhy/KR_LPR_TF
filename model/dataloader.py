@@ -141,15 +141,6 @@ def rect_mask(arr, label=None, max_len=16, fill_value=255):
         # fill mask area
         empty[min_x:max_x, min_y:max_y, idx] = 255
 
-    # realign_mask[:, :, 0] = empty[:, :, 0]
-    # realign_mask[:, :, 2] = empty[:, :, 1]
-    # realign_mask[:, :, 4] = empty[:, :, 2]
-    # for i in [5,6,7]: realign_mask[:, :, i] = empty[:, :, 3]
-    # realign_mask[:, :, 8] = empty[:, :, 4]
-    # realign_mask[:, :, 10] = empty[:, :, 5]
-    # realign_mask[:, :, 12] = empty[:, :, 6]
-    # realign_mask[:, :, 14] = empty[:, :, 7]
-
     # for i in range(max_len//2):
     #     realign_mask[:, :, i*2]   = empty[:, :, i]
     #     realign_mask[:, :, i*2+1] = empty[:, :, i]

@@ -38,7 +38,7 @@ if mode == 'ctc':
     batch_size = 32 * strategy.num_replicas_in_sync
     learning_rate = 5e-3
     opt = 'nadam'
-    weight_path = ""
+    weight_path = ''
 
 if mode == 'label':
     warmup = cfg['warmup']
@@ -155,10 +155,7 @@ with strategy.scope():
         loss={
             'mask': DiceBCELoss(),
             # 'mat_ctc': CTCCenterLoss(n_class=num_class+1, feat_dims=cfg['feat_dims']),
-            'ctc': FocalCTCLoss(
-                alpha=cfg['focal_ctc_loss']['alpha'],
-                gamma=cfg['focal_ctc_loss']['gamma'],
-            ),
+            'ctc': FocalCTCLoss(**cfg['focal_ctc_loss']),
         },
         loss_weights={
             'mask': cfg['loss_weights']['dice_bce_loss'],
