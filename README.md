@@ -1,5 +1,7 @@
 # Korean License Plate Recognition
 
+**This repository is no longer being updated. For a more readable version of License Plate Recognition using Jax, please refer [here](https://github.com/noahzhy/LPR_Jax).**
+
 This repository is based on [Self-supervised Implicit Glyph Attention for Text Recognition](https://arxiv.org/abs/2203.03382). It is a Tensorflow implementation of Korean license plate recognition.
 
 ## Demo
